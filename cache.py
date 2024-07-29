@@ -24,11 +24,11 @@ class Cache:
 
     # read a block from cache
     def read(self, address, to_write=False, is_local=False) -> CacheBlock | None:
-        block_index = address - (address % self.block_size)
         # search in the cache
+        block_index = address - (address % self.block_size)
         block = self.data.get(block_index)
         if block and block.tag != MESITag.I:
-            print("Cache hit!")
+            if not is_local and not to_write: print("Cache hit!")
             return block  # read hit
 
         # If it's a local read don't deal with read miss
@@ -92,7 +92,6 @@ class Cache:
 
     def handle_snoop_message(self, message, address) -> str:
         block_index = address - (address % self.block_size)
-        index = address % self.block_size
         block = self.read(address, is_local=True)
 
         if message == SnoopMessage.READ:
