@@ -29,7 +29,7 @@ class MainMemory:
 
     def __str__(self) -> str:
         blocks = [
-            self.data[i: i + self.block_size]
+            self.data[i : i + self.block_size]
             for i in range(0, self.n_lines, self.block_size)
         ]
 

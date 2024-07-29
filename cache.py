@@ -44,14 +44,6 @@ class Cache:
         else:
             response = self.broadcast_message(SnoopMessage.READ, block_index)
 
-        # update cache
-        if (self.n + 1) > self.n_max:
-            removed_addr = self.queue.pop(0)
-
-            self.bus.write_back(removed_addr, self.data[removed_addr].data)
-            self.data.pop(removed_addr)
-            self.n -= 1
-
         # read from main memory
         block_from_main = self.bus.read_from_main(block_index)
 
@@ -60,13 +52,27 @@ class Cache:
         if response == "shared":
             tag = MESITag.S
 
-        block = CacheBlock(tag, block_from_main)
-        self.data[block_index] = block
+        # Create a new CacheBlock with the data from main
+        block_from_main = CacheBlock(tag, block_from_main)
 
+        # If was present in cache but invalid, just update cache and return
+        if block:
+            self.data[block_index] = block_from_main
+            return block_from_main
+
+        # If cache is full, evict using FIFO and write back to main
+        if (self.n + 1) > self.n_max:
+            removed_addr = self.queue.pop(0)
+
+            self.bus.write_back(removed_addr, self.data[removed_addr].data)
+            self.data.pop(removed_addr)
+            self.n -= 1
+
+        self.data[block_index] = block_from_main
         self.queue.append(block_index)
         self.n += 1
 
-        return block
+        return block_from_main
 
     # write a block of data
     def write(self, address, data):
@@ -96,9 +102,9 @@ class Cache:
 
             # Case Modified
             if block.tag == MESITag.M:
-                self.bus.write_back(address, block)
+                self.bus.write_back(address, block.data)
                 self.data[block_index].tag = MESITag.S
-                return "ok"
+                return "shared"
 
             # Case exlclusive
             if block.tag == MESITag.E:
@@ -113,7 +119,7 @@ class Cache:
                 return "ok"
 
             if block.tag == MESITag.M:
-                self.bus.write_back(address, block)
+                self.bus.write_back(address, block.data)
                 return "ok"
 
             # Invalidate the block in local cache
