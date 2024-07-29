@@ -8,7 +8,7 @@ class CacheBlock:
         self.data: list[BloodType | None] = list(data)
 
     def __str__(self) -> str:
-        return f"({' | '.join([str(x) for x in self.data])})"
+        return f"({' | '.join([str(x) for x in self.data])} || {self.tag.value})"
 
 
 class Cache:
@@ -68,7 +68,7 @@ class Cache:
 
         return block
 
-    # write data to a specif address
+    # write a block of data
     def write(self, address, data):
         block = self.read(address, to_write=True)
 
@@ -85,6 +85,8 @@ class Cache:
         return 0
 
     def handle_snoop_message(self, message, address) -> str:
+        block_index = address - (address % self.block_size)
+        index = address % self.block_size
         block = self.read(address, is_local=True)
 
         if message == SnoopMessage.READ:
@@ -95,14 +97,12 @@ class Cache:
             # Case Modified
             if block.tag == MESITag.M:
                 self.bus.write_back(address, block)
-                block.tag = MESITag.S
-                self.write(address, block)
+                self.data[block_index].tag = MESITag.S
                 return "ok"
 
             # Case exlclusive
             if block.tag == MESITag.E:
-                block.tag = MESITag.S
-                self.write(address, block)
+                self.data[block_index].tag = MESITag.S
 
             # Case exlclusive or shared
             return "shared"
@@ -117,8 +117,7 @@ class Cache:
                 return "ok"
 
             # Invalidate the block in local cache
-            block.tag = MESITag.I
-            self.write(address, block)
+            self.data[block_index].tag = MESITag.I
             return "ok"
 
         if message == SnoopMessage.INVALIDATE:
@@ -127,8 +126,7 @@ class Cache:
                 return "ok"
 
             # Invalidate the block in local cache
-            block.tag = MESITag.I
-            self.write(address, block)
+            self.data[block_index].tag = MESITag.I
             return "ok"
 
         return "invalid"
@@ -137,4 +135,4 @@ class Cache:
         return self.bus.broadcast(message, address, self)
 
     def __str__(self) -> str:
-        return " | ".join([f"{addr}:{str(block)}" for addr, block in self.data.items()])
+        return "\n".join([f"{addr}: {str(self.data[addr])}" for addr in self.queue])

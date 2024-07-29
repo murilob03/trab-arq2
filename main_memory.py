@@ -21,12 +21,20 @@ class MainMemory:
 
         block_index = address - (address % self.block_size)
         for i in range(self.block_size):
-            self.data[block_index + i] = data[i]
+            if (block_index + i) < self.n_lines:
+                self.data[block_index + i] = data[i]
 
     def clear(self) -> None:
         self.data: list[BloodType | None] = [None for _ in range(self.n_lines)]
 
-
     def __str__(self) -> str:
-        return str([str(x) for x in self.data])
+        blocks = [
+            self.data[i: i + self.block_size]
+            for i in range(0, self.n_lines, self.block_size)
+        ]
 
+        for i in range(len(blocks)):
+            blocks[i][0] = f"{i * self.block_size}: {blocks[i][0]}"
+
+        text = "\n".join([" | ".join([str(x) for x in block]) for block in blocks])
+        return text

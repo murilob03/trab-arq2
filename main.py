@@ -6,18 +6,20 @@ from enums import BloodType
 
 MAIN_MEMORY_SIZE = 50
 CACHE_SIZE = 3
-BLOCK_SIZE = 2
+BLOCK_SIZE = 5
+
+if MAIN_MEMORY_SIZE % BLOCK_SIZE != 0:
+    raise ValueError("The main memory size must be divisible by the block size!")
+
 
 main_memory = MainMemory(MAIN_MEMORY_SIZE, BLOCK_SIZE)
-
 bus = Bus(main_memory)
-
 caches = [Cache(CACHE_SIZE, BLOCK_SIZE, bus) for _ in range(4)]
 
 for cache in caches:
     bus.attach_cache(cache)
 
-for i in range(MAIN_MEMORY_SIZE):
+for i in range(0, MAIN_MEMORY_SIZE, BLOCK_SIZE):
     random_block = [random.choice(list(BloodType)) for _ in range(BLOCK_SIZE)]
     main_memory.write(i, random_block)
 
@@ -27,11 +29,16 @@ while True:
     if command == '1':
         print(main_memory)
     if command == '2':
-        cache_n = int(input("Select a cache to read (1-4)\n")) - 1
+        cache_n = int(input(f"Select a cache to print (1-{len(caches)})\n")) - 1
         print(caches[cache_n])
     if command == '3':
-        cache_n = int(input("Select a cache to read (1-4)\n")) - 1
-        addr = int(input(f"Select a address to read (0-{MAIN_MEMORY_SIZE})\n"))
+        cache_n = int(input(f"Select a cache to read (1-{len(caches)})\n")) - 1
+        addr = int(input(f"Select an address to read (0-{MAIN_MEMORY_SIZE})\n"))
         print(str(caches[cache_n].read(addr)))
+    if command == '4':
+        cache_n = int(input(f"Select a cache to read (1-{len(caches)})\n")) - 1
+        addr = int(input(f"Select an address to read (0-{MAIN_MEMORY_SIZE})\n"))
+        value = input(f"Enter a value to write\n")
+        caches[cache_n].write(addr, value)
     if command == '5':
         break
