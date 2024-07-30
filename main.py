@@ -1,4 +1,5 @@
 import random
+import sys
 import tkinter as tk
 from tkinter import ttk
 import tkinter.font as tkFont
@@ -9,7 +10,7 @@ from cache import Cache
 from enums import BloodType
 
 MAIN_MEMORY_SIZE = 200
-CACHE_SIZE = 6
+CACHE_SIZE = 10
 BLOCK_SIZE = 5
 
 if MAIN_MEMORY_SIZE % BLOCK_SIZE != 0:
@@ -63,6 +64,19 @@ def cli_loop():
 def gui():
     tables = []
 
+    class ConsoleOutput:
+        def __init__(self, widget):
+            self.widget = widget
+
+        def write(self, message):
+            self.widget.configure(state="normal")
+            self.widget.insert(tk.END, message)
+            self.widget.configure(state="disabled")
+            self.widget.see(tk.END)
+
+        def flush(self):  # Ensure compatibility with Python's flush() method
+            pass
+
     def refresh_tables():
         for table in tables:
             for item in table.get_children():
@@ -82,15 +96,15 @@ def gui():
                         data,
                         caches[i - 1].data[addr].tag.value,
                     ),
-                    tags=('fixed',)
+                    tags=("fixed",),
                 )
 
     # Define the mapping of labels to values
     processor_map = {
-        "Processor 1": 0,
-        "Processor 2": 1,
-        "Processor 3": 2,
-        "Processor 4": 3,
+        "Processador 1": 0,
+        "Processador 2": 1,
+        "Processador 3": 2,
+        "Processador 4": 3,
     }
 
     # Function to handle writing to an address
@@ -100,7 +114,7 @@ def gui():
         value = value_combobox.get()
         # Implement the logic to write to the given address
         print(f"Writing to address: {address}")
-        caches[processor_map[processor]].write(address, BloodType(value))
+        caches[processor_map[processor]].write(address, BloodType(value.strip()))
         refresh_tables()
 
     # Function to handle reading from an address
@@ -112,7 +126,6 @@ def gui():
         print(caches[processor_map[processor]].read(address))
         refresh_tables()
 
-    
     root = tk.Tk()
     root.title("MESI Simulator")
 
@@ -133,15 +146,19 @@ def gui():
     value_label = tk.Label(control_frame, text="Valor:")
     value_label.pack(side=tk.LEFT, padx=5, pady=5)
     value_options = [str(x) for x in list(BloodType)]
-    value_combobox = ttk.Combobox(control_frame, values=value_options, width=4, state="readonly")
+    value_combobox = ttk.Combobox(
+        control_frame, values=value_options, width=4, state="readonly"
+    )
     value_combobox.pack(side=tk.LEFT, padx=5, pady=5)
     value_combobox.current(0)  # Set default selection
 
     # Dropdown for processor
     processor_label = tk.Label(control_frame, text="Processador:")
     processor_label.pack(side=tk.LEFT, padx=5, pady=5)
-    processor_options = ["Processor 1", "Processor 2", "Processor 3", "Processor 4"]
-    processor_combobox = ttk.Combobox(control_frame, values=processor_options, width=12, state="readonly")
+    processor_options = list(processor_map.keys())
+    processor_combobox = ttk.Combobox(
+        control_frame, values=processor_options, width=12, state="readonly"
+    )
     processor_combobox.pack(side=tk.LEFT, padx=5, pady=5)
     processor_combobox.current(0)  # Set default selection
 
@@ -153,10 +170,13 @@ def gui():
     read_button = tk.Button(control_frame, text="Read", command=read_address)
     read_button.pack(side=tk.LEFT, padx=5, pady=5)
 
-
     # Create a frame for the table
     table_frame = tk.Frame(root)
     table_frame.pack(pady=10)
+
+    # Main table label
+    table_label = tk.Label(table_frame, text="Main Memory")
+    table_label.grid(row=0, column=0, sticky="n", padx=(15, 0))
 
     # Create the table
     table = ttk.Treeview(
@@ -166,11 +186,21 @@ def gui():
     table.heading("Col2", text="Valor")
     table.column("Col1", width=80, anchor="center")
     table.column("Col2", width=80, anchor="center")
-    table.grid(row=0, column=0, rowspan=2, sticky="nswe", padx=10, pady=5)
-    table.tag_configure('fixed', font=fixed_font)
+    table.grid(row=0, column=0, rowspan=2, sticky="nswe", padx=(10, 0), pady=(25, 5))
+    table.tag_configure("fixed", font=fixed_font)
+
+    # Create a scrollbar for the first table
+    scrollbar = tk.Scrollbar(table_frame, orient="vertical", command=table.yview)
+    scrollbar.grid(row=0, column=1, rowspan=2, padx=(0, 5), pady=(25, 5), sticky="ns")
+
+    table.configure(yscrollcommand=scrollbar.set)
     tables.append(table)
 
     for i in range(len(caches)):
+        # Cache table label
+        cache_table_label = tk.Label(table_frame, text=f"Processador {i + 1}")
+        cache_table_label.grid(row=i // 2, column=2 + i % 2, sticky="n")
+
         cache_table = ttk.Treeview(
             table_frame, columns=("Col1", "Col2", "Col3"), show="headings"
         )
@@ -180,12 +210,30 @@ def gui():
         cache_table.column("Col1", width=80, anchor="center")
         cache_table.column("Col2", width=250, anchor="center")
         cache_table.column("Col3", width=40, anchor="center")
-        cache_table.tag_configure('fixed', font=fixed_font)
-        cache_table.grid(row=i // 2, column=1 + i % 2, sticky="nswe", padx=10, pady=5)
+        cache_table.tag_configure("fixed", font=fixed_font)
+        cache_table.grid(row=i // 2, column=2 + i % 2, sticky="nswe", padx=5, pady=(25, 5))
 
         tables.append(cache_table)
 
     refresh_tables()
+
+    # Main table label
+    console_label = tk.Label(table_frame, text="Output")
+    console_label.grid(row=0, column=4, sticky="n")
+
+    # Create the Text widget for the console output
+    console = tk.Text(table_frame, wrap="word", width=40)
+    console.grid(row=0, column=4, rowspan=2, sticky="nswe", padx=(5, 0), pady=(25, 5))
+
+    # Create a scrollbar for the console output
+    scrollbar = tk.Scrollbar(table_frame, orient="vertical", command=console.yview)
+    scrollbar.grid(row=0, column=5, rowspan=2, padx=(0, 10), pady=(25, 5), sticky="ns")
+
+    # Make the Text widget read-only
+    console.configure(state="disabled", yscrollcommand=scrollbar.set)
+
+    # Redirect stdout to the console widget
+    sys.stdout = ConsoleOutput(console)
 
     # Run the application
     root.mainloop()
