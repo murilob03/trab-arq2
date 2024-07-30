@@ -1,6 +1,7 @@
 import random
 import tkinter as tk
 from tkinter import ttk
+import tkinter.font as tkFont
 
 from main_memory import MainMemory
 from bus import Bus
@@ -60,20 +61,63 @@ def cli_loop():
 
 
 def gui():
+    tables = []
+
+    def refresh_tables():
+        for table in tables:
+            for item in table.get_children():
+                table.delete(item)
+
+        for i in range(0, MAIN_MEMORY_SIZE):
+            tables[0].insert("", "end", values=(i, main_memory.data[i]))
+
+        for i in range(1, len(caches) + 1):
+            for addr in caches[i - 1].queue:
+                data = " | ".join([str(v) for v in caches[i - 1].data[addr].data])
+                tables[i].insert(
+                    "",
+                    "end",
+                    values=(
+                        addr,
+                        data,
+                        caches[i - 1].data[addr].tag.value,
+                    ),
+                    tags=('fixed',)
+                )
+
+    # Define the mapping of labels to values
+    processor_map = {
+        "Processor 1": 0,
+        "Processor 2": 1,
+        "Processor 3": 2,
+        "Processor 4": 3,
+    }
+
     # Function to handle writing to an address
     def write_address():
-        address = address_entry.get()
+        address = int(address_entry.get())
+        processor = processor_combobox.get()
+        value = value_combobox.get()
         # Implement the logic to write to the given address
         print(f"Writing to address: {address}")
+        caches[processor_map[processor]].write(address, BloodType(value))
+        refresh_tables()
 
     # Function to handle reading from an address
     def read_address():
-        address = address_entry.get()
+        address = int(address_entry.get())
+        processor = processor_combobox.get()
         # Implement the logic to read from the given address
         print(f"Reading from address: {address}")
+        print(caches[processor_map[processor]].read(address))
+        refresh_tables()
 
+    
     root = tk.Tk()
     root.title("MESI Simulator")
+
+    # Create a fixed-width font
+    fixed_font = tkFont.Font(family="Courier New", size=10)
 
     # Create a frame for the address and processor entries and buttons
     control_frame = tk.Frame(root)
@@ -81,44 +125,50 @@ def gui():
 
     # Entry for address
     address_label = tk.Label(control_frame, text="Endereço:")
-    address_label.grid(row=0, column=0, padx=5, pady=5)
-    address_entry = tk.Entry(control_frame, width=20)
-    address_entry.grid(row=0, column=1, padx=5, pady=5)
+    address_label.pack(side=tk.LEFT, padx=5, pady=5)
+    address_entry = tk.Entry(control_frame, width=5)
+    address_entry.pack(side=tk.LEFT, padx=5, pady=5)
+
+    # Dropdown for value
+    value_label = tk.Label(control_frame, text="Valor:")
+    value_label.pack(side=tk.LEFT, padx=5, pady=5)
+    value_options = [str(x) for x in list(BloodType)]
+    value_combobox = ttk.Combobox(control_frame, values=value_options, width=4, state="readonly")
+    value_combobox.pack(side=tk.LEFT, padx=5, pady=5)
+    value_combobox.current(0)  # Set default selection
 
     # Dropdown for processor
     processor_label = tk.Label(control_frame, text="Processador:")
-    processor_label.grid(row=0, column=2, padx=5, pady=5)
+    processor_label.pack(side=tk.LEFT, padx=5, pady=5)
     processor_options = ["Processor 1", "Processor 2", "Processor 3", "Processor 4"]
-    processor_combobox = ttk.Combobox(
-        control_frame, values=processor_options, width=18, state="readonly"
-    )
-    processor_combobox.grid(row=0, column=3, padx=5, pady=5)
+    processor_combobox = ttk.Combobox(control_frame, values=processor_options, width=12, state="readonly")
+    processor_combobox.pack(side=tk.LEFT, padx=5, pady=5)
     processor_combobox.current(0)  # Set default selection
 
     # Write button
     write_button = tk.Button(control_frame, text="Write", command=write_address)
-    write_button.grid(row=0, column=4, padx=5, pady=5)
+    write_button.pack(side=tk.LEFT, padx=5, pady=5)
 
     # Read button
     read_button = tk.Button(control_frame, text="Read", command=read_address)
-    read_button.grid(row=0, column=5, padx=5, pady=5)
+    read_button.pack(side=tk.LEFT, padx=5, pady=5)
+
 
     # Create a frame for the table
     table_frame = tk.Frame(root)
     table_frame.pack(pady=10)
 
     # Create the table
-    table1 = ttk.Treeview(
+    table = ttk.Treeview(
         table_frame, columns=("Col1", "Col2"), show="headings", height=40
     )
-    table1.heading("Col1", text="Endereço")
-    table1.heading("Col2", text="Valor")
-    table1.column("Col1", width=80, anchor="center")
-    table1.column("Col2", width=80, anchor="center")
-    table1.grid(row=0, column=0, rowspan=2, sticky="nswe", padx=10, pady=5)
-
-    for i in range(0, MAIN_MEMORY_SIZE):
-        table1.insert("", "end", values=(i, main_memory.data[i]))
+    table.heading("Col1", text="Endereço")
+    table.heading("Col2", text="Valor")
+    table.column("Col1", width=80, anchor="center")
+    table.column("Col2", width=80, anchor="center")
+    table.grid(row=0, column=0, rowspan=2, sticky="nswe", padx=10, pady=5)
+    table.tag_configure('fixed', font=fixed_font)
+    tables.append(table)
 
     for i in range(len(caches)):
         cache_table = ttk.Treeview(
@@ -128,20 +178,14 @@ def gui():
         cache_table.heading("Col2", text="Dados")
         cache_table.heading("Col3", text="Tag")
         cache_table.column("Col1", width=80, anchor="center")
-        cache_table.column("Col2", width=120, anchor="center")
-        cache_table.column("Col3", width=80, anchor="center")
+        cache_table.column("Col2", width=250, anchor="center")
+        cache_table.column("Col3", width=40, anchor="center")
+        cache_table.tag_configure('fixed', font=fixed_font)
         cache_table.grid(row=i // 2, column=1 + i % 2, sticky="nswe", padx=10, pady=5)
 
-        for addr in caches[i].queue:
-            cache_table.insert(
-                "",
-                "end",
-                values=(
-                    addr,
-                    [str(v) for v in caches[i].data[addr].data],
-                    caches[i].data[addr].tag.value,
-                ),
-            )
+        tables.append(cache_table)
+
+    refresh_tables()
 
     # Run the application
     root.mainloop()
