@@ -28,20 +28,25 @@ class Cache:
         block_index = address - (address % self.block_size)
         block = self.data.get(block_index)
         if block and block.tag != MESITag.I:
-            if not is_local and not to_write: print("Cache hit!")
+            if not is_local:
+                if to_write:
+                    print("Write Hit!")
+                else:
+                    print("Read Hit!")
             return block  # read hit
 
         # If it's a local read don't deal with read miss
         if is_local:
             return None
 
-        print("Cache miss!")
         # consider intention to write
         if to_write:
+            print("Write Miss!")
             response = self.broadcast_message(
                 SnoopMessage.READ_WITH_INTENT_TO_MODIFY, block_index
             )
         else:
+            print("Read Miss!")
             response = self.broadcast_message(SnoopMessage.READ, block_index)
 
         # read from main memory
@@ -130,7 +135,7 @@ class Cache:
             if block == None or block.tag == MESITag.I:
                 return "ok"
 
-            # Invalidate the block in local cache
+            # Invalidate block in local cache
             self.data[block_index].tag = MESITag.I
             return "ok"
 

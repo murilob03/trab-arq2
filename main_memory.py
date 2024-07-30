@@ -34,7 +34,7 @@ class MainMemory:
         ]
 
         for i in range(len(blocks)):
-            blocks[i][0] = f"{i * self.block_size}: {blocks[i][0]}" # type: ignore
+            blocks[i][0] = f"{i * self.block_size}: {blocks[i][0]}"  # type: ignore
 
         text = "\n".join([" | ".join([str(x) for x in block]) for block in blocks])
         return text

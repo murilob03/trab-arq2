@@ -20,7 +20,7 @@ class BloodType(Enum):
 
     def __str__(self) -> str:
         if len(self.value) < 3:
-            return self.value + ' '
+            return self.value + " "
         return self.value
 
 
