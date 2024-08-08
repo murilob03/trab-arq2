@@ -1,8 +1,8 @@
 import random
-from bus import Bus
-from cache import Cache
+
+from components import Cache, MainMemory, Bus
+
 from enums import BloodType
-from main_memory import MainMemory
 
 
 # Constants

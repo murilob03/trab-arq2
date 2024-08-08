@@ -1,10 +1,7 @@
-from main_memory import MainMemory
-
-
 class Bus:
-    def __init__(self, main_memory: MainMemory):
+    def __init__(self, main_memory):
         self.caches = []
-        self.main_memory: MainMemory = main_memory
+        self.main_memory = main_memory
 
     def attach_cache(self, cache):
         self.caches.append(cache)

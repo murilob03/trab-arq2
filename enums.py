@@ -17,8 +17,11 @@ class BloodType(Enum):
     AB_NEGATIVE = "AB-"
     O_POSITIVE = "O+"
     O_NEGATIVE = "O-"
+    EMPTY = "E"
 
     def __str__(self) -> str:
+        if len(self.value) < 2:
+            return self.value + "  "
         if len(self.value) < 3:
             return self.value + " "
         return self.value

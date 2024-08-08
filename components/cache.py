@@ -1,4 +1,4 @@
-from bus import Bus
+from components import Bus
 from enums import BloodType, MESITag, SnoopMessage
 
 

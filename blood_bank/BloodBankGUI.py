@@ -21,7 +21,7 @@ class ConsoleOutput:
         pass
 
 
-class MESISimulatorGUI:
+class BloodBankGUI:
     def __init__(self, simulator: MESISimulator):
         self.main_memory = simulator.main_memory
         self.caches = simulator.caches
@@ -31,14 +31,14 @@ class MESISimulatorGUI:
         self.tables = []
         self.processor_map = {}
         for i in range(len(self.caches)):
-            self.processor_map[f"Processor {i + 1}"] = i
+            self.processor_map[f"Hospital {i + 1}"] = i
 
         self.root = tk.Tk()
         self.root.title("MESI Simulator")
 
         self.setup_ui()
 
-    def refresh_tables(self):
+    def refresh_tables(self, event):
         for table in self.tables:
             for item in table.get_children():
                 table.delete(item)
@@ -46,19 +46,19 @@ class MESISimulatorGUI:
         for i in range(self.MAIN_MEMORY_SIZE):
             self.tables[0].insert("", "end", values=(i, self.main_memory.data[i]))
 
-        for i in range(1, len(self.caches) + 1):
-            for addr in reversed(self.caches[i - 1].queue):
-                data = " | ".join([str(v) for v in self.caches[i - 1].data[addr].data])
-                self.tables[i].insert(
-                    "",
-                    "end",
-                    values=(
-                        addr,
-                        data,
-                        self.caches[i - 1].data[addr].tag.value,
-                    ),
-                    tags=("fixed",),
-                )
+        active_hospital = self.processor_map[self.processor_combobox.get()]
+        for addr in reversed(self.caches[active_hospital].queue):
+            data = " | ".join([str(v) for v in self.caches[active_hospital].data[addr].data])
+            self.tables[1].insert(
+                "",
+                "end",
+                values=(
+                    addr,
+                    data,
+                    self.caches[active_hospital].data[addr].tag.value,
+                ),
+                tags=("fixed",),
+            )
 
     def write_address(self):
         address_raw = self.address_entry.get()
@@ -170,25 +170,27 @@ class MESISimulatorGUI:
         table.configure(yscrollcommand=scrollbar.set)
         self.tables.append(table)
 
-        for i in range(len(self.caches)):
-            cache_table_label = tk.Label(table_frame, text=f"Processor {i + 1}")
-            cache_table_label.grid(row=i % 2, column=2 + i // 2, sticky="n")
+        active_hospital = self.processor_map[self.processor_combobox.get()]
 
-            cache_table = ttk.Treeview(
-                table_frame, columns=("Col1", "Col2", "Col3"), show="headings"
-            )
-            cache_table.heading("Col1", text="Address")
-            cache_table.heading("Col2", text="Data")
-            cache_table.heading("Col3", text="Tag")
-            cache_table.column("Col1", width=80, anchor="center")
-            cache_table.column("Col2", width=250, anchor="center")
-            cache_table.column("Col3", width=40, anchor="center")
-            cache_table.tag_configure("fixed", font=fixed_font)
-            cache_table.grid(
-                row=i % 2, column=2 + i // 2, sticky="nswe", padx=5, pady=(25, 5)
-            )
-            self.tables.append(cache_table)
+        cache_table_label = tk.Label(
+            table_frame, text=f"Hospital {active_hospital + 1}"
+        )
+        cache_table_label.grid(row=0, column=2, sticky="n")
 
+        cache_table = ttk.Treeview(
+            table_frame, columns=("Col1", "Col2", "Col3"), show="headings"
+        )
+        cache_table.heading("Col1", text="Address")
+        cache_table.heading("Col2", text="Data")
+        cache_table.heading("Col3", text="Tag")
+        cache_table.column("Col1", width=80, anchor="center")
+        cache_table.column("Col2", width=250, anchor="center")
+        cache_table.column("Col3", width=40, anchor="center")
+        cache_table.tag_configure("fixed", font=fixed_font)
+        cache_table.grid(row=0, column=2, sticky="nswe", padx=5, pady=(25, 5))
+        self.tables.append(cache_table)
+
+        self.processor_combobox.bind("<<ComboboxSelected>>", self.refresh_tables)
         self.refresh_tables()
 
         console_label = tk.Label(table_frame, text="Output")
