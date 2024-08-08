@@ -7,20 +7,6 @@ from enums import BloodType
 from mesi_simulator import MESISimulator
 
 
-class ConsoleOutput:
-    def __init__(self, widget):
-        self.widget = widget
-
-    def write(self, message):
-        self.widget.configure(state="normal")
-        self.widget.insert(tk.END, message)
-        self.widget.configure(state="disabled")
-        self.widget.see(tk.END)
-
-    def flush(self):
-        pass
-
-
 class BloodBankGUI:
     def __init__(self, simulator: MESISimulator):
         self.main_memory = simulator.main_memory
@@ -38,17 +24,22 @@ class BloodBankGUI:
 
         self.setup_ui()
 
-    def refresh_tables(self, event):
+    def refresh_tables(self):
         for table in self.tables:
             for item in table.get_children():
                 table.delete(item)
 
         for i in range(self.MAIN_MEMORY_SIZE):
-            self.tables[0].insert("", "end", values=(i, self.main_memory.data[i]))
+            if i % 10 < 5:
+                self.tables[0].insert("", "end", values=(i, self.main_memory.data[i]), tags=('fixed'))
+            else:
+                self.tables[0].insert("", "end", values=(i, self.main_memory.data[i]), tags=('lightgray', 'fixed'))
 
         active_hospital = self.processor_map[self.processor_combobox.get()]
         for addr in reversed(self.caches[active_hospital].queue):
-            data = " | ".join([str(v) for v in self.caches[active_hospital].data[addr].data])
+            data = " | ".join(
+                [str(v) for v in self.caches[active_hospital].data[addr].data]
+            )
             self.tables[1].insert(
                 "",
                 "end",
@@ -160,6 +151,7 @@ class BloodBankGUI:
         table.grid(
             row=0, column=0, rowspan=2, sticky="nswe", padx=(10, 0), pady=(25, 5)
         )
+        table.tag_configure('lightgray', background='#d3d3d3')
         table.tag_configure("fixed", font=fixed_font)
 
         scrollbar = tk.Scrollbar(table_frame, orient="vertical", command=table.yview)
@@ -187,10 +179,16 @@ class BloodBankGUI:
         cache_table.column("Col2", width=250, anchor="center")
         cache_table.column("Col3", width=40, anchor="center")
         cache_table.tag_configure("fixed", font=fixed_font)
-        cache_table.grid(row=0, column=2, sticky="nswe", padx=5, pady=(25, 5))
+        cache_table.grid(
+            rowspan=2, row=0, column=2, sticky="nswe", padx=5, pady=(25, 5)
+        )
         self.tables.append(cache_table)
 
-        self.processor_combobox.bind("<<ComboboxSelected>>", self.refresh_tables)
+        def on_combobox_change(event):
+            cache_table_label.config(text=f"{self.processor_combobox.get()}")
+            self.refresh_tables()
+
+        self.processor_combobox.bind("<<ComboboxSelected>>", on_combobox_change)
         self.refresh_tables()
 
         console_label = tk.Label(table_frame, text="Output")
@@ -215,10 +213,6 @@ class BloodBankGUI:
             pady=(25, 5),
             sticky="ns",
         )
-
-        console.configure(state="disabled", yscrollcommand=scrollbar.set)
-
-        sys.stdout = ConsoleOutput(console)
 
     def mainloop(self):
         self.root.mainloop()
