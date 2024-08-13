@@ -1,5 +1,5 @@
-from mesi_simulator import MESISimulator
-from enums import BloodType
+from src.mesi_simulator import MESISimulator
+from src.enums import BloodType
 
 
 class BloodBank:

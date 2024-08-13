@@ -3,8 +3,8 @@ from tkinter import ttk
 import tkinter.font as tkFont
 import sys
 
-from enums import BloodType
-from mesi_simulator import MESISimulator
+from src.enums import BloodType
+from src.mesi_simulator import MESISimulator
 
 
 class ConsoleOutput:

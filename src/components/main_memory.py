@@ -1,4 +1,4 @@
-from enums import BloodType
+from src.enums import BloodType
 
 
 class MainMemory:
@@ -23,9 +23,6 @@ class MainMemory:
         for i in range(self.block_size):
             if (block_index + i) < self.n_lines:
                 self.data[block_index + i] = data[i]
-
-    def clear(self) -> None:
-        self.data: list[BloodType | None] = [None for _ in range(self.n_lines)]
 
     def __str__(self) -> str:
         blocks = [

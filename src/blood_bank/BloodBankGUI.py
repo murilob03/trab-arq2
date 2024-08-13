@@ -1,9 +1,10 @@
 import tkinter as tk
 from tkinter import ttk
 import tkinter.font as tkFont
-from enums import BloodType
-from mesi_simulator import MESISimulator
-from blood_bank.BloodBank import BloodBank
+
+from src.enums import BloodType
+from src.mesi_simulator import MESISimulator
+from src.blood_bank.BloodBank import BloodBank
 
 
 class OutputBox:

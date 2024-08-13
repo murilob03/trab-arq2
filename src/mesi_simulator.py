@@ -1,8 +1,7 @@
 import random
 
-from components import Cache, MainMemory, Bus
-
-from enums import BloodType
+from src.components import Cache, MainMemory, Bus
+from src.enums import BloodType
 
 
 # Constants
@@ -35,5 +34,5 @@ class MESISimulator:
     def populate_caches(self):
         # Populate caches from main memory
         for cache in self.caches:
-            while cache.n < cache.n_max:
+            while cache.current_lines < cache.max_lines:
                 cache.read(random.randint(0, MAIN_MEMORY_SIZE - 1))

@@ -31,3 +31,9 @@ class SnoopMessage(Enum):
     READ = "read"
     READ_WITH_INTENT_TO_MODIFY = "rwitm"
     INVALIDATE = "invalidate"
+
+
+class SnoopResponse(Enum):
+    OK = "ok"
+    SHARED = "shared"
+    INVALID = "invalid"
