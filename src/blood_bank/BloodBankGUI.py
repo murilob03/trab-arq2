@@ -40,7 +40,7 @@ class BloodBankGUI:
         self.processor_map = {f"Hospital {i + 1}": i for i in range(len(self.caches))}
         self.output = OutputBox()
         self.root = tk.Tk()
-        self.root.title("MESI Simulator")
+        self.root.title("Blood Bank Simulator")
         self.setup_ui()
 
     def refresh_tables(self):
@@ -115,17 +115,8 @@ class BloodBankGUI:
         control_frame = tk.Frame(self.root)
         control_frame.pack(pady=10)
 
-        # Blood type combobox
-        tk.Label(control_frame, text="Value:").pack(side=tk.LEFT, padx=5, pady=5)
-        blood_options = [str(x) for x in list(BloodType)]
-        self.blood_combobox = ttk.Combobox(
-            control_frame, values=blood_options, width=4, state="readonly"
-        )
-        self.blood_combobox.pack(side=tk.LEFT, padx=5, pady=5)
-        self.blood_combobox.current(0)
-
         # Hospital combobox
-        tk.Label(control_frame, text="Processor:").pack(side=tk.LEFT, padx=5, pady=5)
+        tk.Label(control_frame, text="Hospital:").pack(side=tk.LEFT, padx=5, pady=5)
         hospital_options = list(self.processor_map.keys())
         self.hospital_combobox = ttk.Combobox(
             control_frame, values=hospital_options, width=12, state="readonly"
@@ -140,6 +131,16 @@ class BloodBankGUI:
         tk.Button(control_frame, text="Use Blood", command=self.use_blood).pack(
             side=tk.LEFT, padx=5, pady=5
         )
+
+        # Blood type combobox
+        tk.Label(control_frame, text="Type:").pack(side=tk.LEFT, padx=5, pady=5)
+        blood_options = [str(x) for x in list(BloodType)]
+        self.blood_combobox = ttk.Combobox(
+            control_frame, values=blood_options, width=4, state="readonly"
+        )
+        self.blood_combobox.pack(side=tk.LEFT, padx=5, pady=5)
+        self.blood_combobox.current(0)
+
         tk.Button(control_frame, text="Donate Blood", command=self.donate_blood).pack(
             side=tk.LEFT, padx=5, pady=5
         )
@@ -156,7 +157,7 @@ class BloodBankGUI:
             table_frame, columns=("Col1", "Col2"), show="headings", height=40
         )
         memory_table.heading("Col1", text="Address")
-        memory_table.heading("Col2", text="Value")
+        memory_table.heading("Col2", text="Type")
         memory_table.column("Col1", width=80, anchor="center")
         memory_table.column("Col2", width=80, anchor="center")
         memory_table.grid(
